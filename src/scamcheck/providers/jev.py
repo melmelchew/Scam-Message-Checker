@@ -93,15 +93,19 @@ def build_request(model: str, question_set: str, message: str, signals: list[str
     raise ValueError(f"unknown Jev question set: {question_set}")
 
 
-def to_verdict(answers: dict) -> tuple[Verdict, float]:
+def to_verdict(answers: dict) -> tuple[Verdict, dict]:
+    """Returns the Verdict plus Jev's full breakdown (label probabilities, per-tactic scores)."""
     label_ans = answers["label"]
     probs = label_ans["probabilities"]
     label = label_ans["choice"]
-    flags = [name for i, name in enumerate(RED_FLAGS) if answers.get(f"flag_{i}", {}).get("noul", 0) > 0.5]
+    # Only question sets that ask the tactic/injection nouls produce these scores.
+    tactics = {name: answers[f"flag_{i}"]["noul"] for i, name in enumerate(RED_FLAGS) if f"flag_{i}" in answers}
+    injection = answers.get("injection", {}).get("noul")
+    flags = [name for name, p in tactics.items() if p > 0.5]
 
     # Jev reads the message as trusted state, so an instruction aimed at the checker could sway
     # the label. Treat that instruction as a scam signal and override in code.
-    if answers.get("injection", {}).get("noul", 0) > 0.5:
+    if injection is not None and injection > 0.5:
         label = "scam"
         flags.insert(0, "Contains instructions aimed at scam checkers")
 
@@ -115,7 +119,9 @@ def to_verdict(answers: dict) -> tuple[Verdict, float]:
     explanation = f"Jev is {confidence:.0%} confident this message is {label}."
     if flags:
         explanation += " Warning signs: " + "; ".join(f.lower() for f in flags) + "."
-    return Verdict(label=label, risk_score=risk, red_flags=flags, explanation=explanation, advice=ADVICE[label]), confidence
+    details = {"confidence": confidence, "label_probabilities": probs, "tactics": tactics, "injection": injection, "jev_label": label_ans["choice"]}
+    verdict = Verdict(label=label, risk_score=risk, red_flags=flags, explanation=explanation, advice=ADVICE[label])
+    return verdict, details
 
 
 @cache

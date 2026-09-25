@@ -40,8 +40,8 @@ def test_v1_request_is_label_only():
 
 
 def test_to_verdict_maps_flags_and_risk():
-    v, conf = jev.to_verdict(answers(flags=(2,)))
-    assert v.label == "scam" and conf == 0.9
+    v, details = jev.to_verdict(answers(flags=(2,)))
+    assert v.label == "scam" and details["confidence"] == 0.9
     assert v.red_flags == [list(jev.RED_FLAGS)[2]]
     assert v.risk_score == 94
 
@@ -110,3 +110,24 @@ def test_risk_score_stays_in_label_band(choice, probs, low, high):
 def test_legit_verdict_has_no_red_flags():
     v, _ = jev.to_verdict(answers(choice="legit", probs={"scam": 0.01, "suspicious": 0.01, "legit": 0.98}, flags=(6,)))
     assert v.red_flags == [] and "Warning signs" not in v.explanation
+
+
+def test_details_keep_full_breakdown():
+    probs = {"scam": 0.0, "suspicious": 0.34, "legit": 0.66}
+    v, d = jev.to_verdict(answers(choice="legit", probs=probs, flags=(6,)))
+    assert v.red_flags == []  # hidden in the verdict ...
+    assert d["tactics"][list(jev.RED_FLAGS)[6]] == 0.9  # ... but still in the breakdown
+    assert len(d["tactics"]) == len(jev.RED_FLAGS)
+    assert d["label_probabilities"] == probs and d["injection"] == 0.0 and d["jev_label"] == "legit"
+
+
+def test_details_for_label_only_question_set():
+    a = {"label": {"choice": "scam", "confidence": 0.8, "probabilities": {"scam": 0.8, "suspicious": 0.2, "legit": 0.0}}}
+    _, d = jev.to_verdict(a)
+    assert d["tactics"] == {} and d["injection"] is None
+
+
+def test_check_result_carries_details():
+    http = fake_http({"answers": answers(), "usage": {}})
+    res = check("hi", CheckerConfig(model=JEV), client=http)
+    assert res.details["label_probabilities"]["scam"] == 0.9

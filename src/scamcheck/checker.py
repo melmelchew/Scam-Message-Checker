@@ -27,6 +27,8 @@ class CheckResult:
     cache_read_tokens: int
     latency_s: float
     confidence: float | None = None
+    # Provider-specific breakdown shown in the UI's Details section (Jev only).
+    details: dict | None = None
 
 
 @cache
@@ -57,7 +59,7 @@ def _check_jev(message: str, found: list[str], config: CheckerConfig, client) ->
     start = time.perf_counter()
     try:
         data = jev.call(jev.build_request(config.model, config.prompt_version, message, found), client)
-        verdict, confidence = jev.to_verdict(data["answers"])
+        verdict, details = jev.to_verdict(data["answers"])
     except jev.JevError as e:
         raise CheckError(str(e)) from e
     except (KeyError, ValueError) as e:
@@ -70,7 +72,8 @@ def _check_jev(message: str, found: list[str], config: CheckerConfig, client) ->
         output_tokens=usage.get("output_tokens", 0),
         cache_read_tokens=0,
         latency_s=time.perf_counter() - start,
-        confidence=confidence,
+        confidence=details["confidence"],
+        details=details,
     )
 
 
