@@ -131,3 +131,24 @@ def test_check_result_carries_details():
     http = fake_http({"answers": answers(), "usage": {}})
     res = check("hi", CheckerConfig(model=JEV), client=http)
     assert res.details["label_probabilities"]["scam"] == 0.9
+
+
+def test_v3_adds_task_job_and_wrong_number_checks():
+    v2 = jev.build_request(JEV, "v2_checklist", "hi", [])["questions"]
+    v3 = jev.build_request(JEV, "v3_checklist", "hi", [])["questions"]
+    assert set(v3) - set(v2) == {f"flag_{len(jev.RED_FLAGS)}", f"flag_{len(jev.RED_FLAGS) + 1}"}
+    assert "online tasks" in v3["label"]["criteria"]["scam"]
+    assert "wrong-number" in v3["label"]["criteria"]["suspicious"]
+
+
+def test_v3_answers_map_to_new_flag_names():
+    a = answers(choice="suspicious", probs={"scam": 0.2, "suspicious": 0.7, "legit": 0.1})
+    a[f"flag_{len(jev.RED_FLAGS) + 1}"] = {"noul": 0.8}
+    v, d = jev.to_verdict(a)
+    assert "Friendly or wrong-number opener from a stranger" in v.red_flags
+    assert len(d["tactics"]) == len(jev.RED_FLAGS) + 1  # only the flags present in the answers
+
+
+def test_flagless_non_legit_verdict_explains_itself():
+    v, _ = jev.to_verdict(answers(choice="suspicious", probs={"scam": 0.1, "suspicious": 0.6, "legit": 0.3}))
+    assert v.red_flags == [] and "message as a whole" in v.explanation

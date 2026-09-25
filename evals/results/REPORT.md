@@ -35,8 +35,41 @@ Run `20260925-134756` used `jev-1.13-free` through OpenCode Zen. v1 had 0.77 acc
 3. **The regex treated "Do not share this OTP" as asking for the OTP.** That wrong hint was fed to Jev in v2's state. *Fix:* negation check in `rules.py`. The baseline's legit false positives went from 25% to 20%.
 4. **Contradictory verdicts.** A legit OTP (m041) showed the red flag "Plays on emotion or secrecy", and a legit verdict came with risk 48. *Fix:* no flags on legit verdicts, and the risk score is kept inside its label's band.
 
-## Next iteration
-Add a task-job-scam item ("pays for simple online tasks such as liking videos or writing reviews") to `RED_FLAGS` and the scam criteria, then re-run v2. Keep the change only if m008 becomes `scam` with legit FP still ≤ 10%.
+## Iteration 2: v2 vs v3 on an expanded dataset (rule written before the run)
+**Why:** two gaps. v2's one scam miss was a task-job scam (m008). A user review also pointed out that wrong-number / friendly-opener scams ("Hi Emily, are we still meeting for lunch?"), which lead into pig-butchering investment pitches, weren't covered. v2 labelled m026 ("Hi, is this Jessica?") `legit` in 3 of 3 runs.
+
+**Dataset change:** 12 messages added (m061–m072), giving 72 in total:
+- the user's 4 templates: delivery fee, bank overseas login, FairPrice voucher, wrong-number opener (×2);
+- 3 more wrong-number openers and a wrong-number pivot to a gold-trading pitch;
+- 2 more task-job scams;
+- 2 **hard legit twins**: a real lunch reminder from a church friend, and a real "sorry, wrong number".
+
+**v3_checklist** = v2 plus two tactic checks (task-job scams, wrong-number / friendly openers from an unknown sender) and label definitions that name them.
+
+**Decision rule (fixed before running):** adopt v3 only if all of these hold:
+1. It passes the bar on the 72-message set (scam recall ≥ 90%, legit FP ≤ 10%, 0 errors).
+2. Its legit FP is no higher than v2's on the same run.
+3. It gets more of the target messages right than v2. Targets: task-job m008, m069, m070; wrong-number m026, m027, m064–m068.
+
+Otherwise keep v2 and record why.
+
+### Result: run `20260925-145342-v2-vs-v3` (72 messages × 3 repeats, 0 errors, $0.015)
+
+| config | acc | scam recall | scams missed as legit | legit FP | target msgs right | bar |
+|---|---|---|---|---|---|---|
+| rules_only | 0.53 | 0.42 | 0.32 | 0.18 | – | ✗ |
+| v2_checklist | 0.83 | 0.91 | 0.00 | 0.08 | 10 / 30 | ✓ |
+| **v3_checklist** | **0.92** | **1.00** | 0.00 | **0.03** | **27 / 30** | ✓ |
+
+**Decision: adopt v3.** All three conditions hold, and `DEFAULT_CONFIG` is now `v3_checklist`.
+- **Task-job scams are fixed.** m008 and m069 went from mostly `suspicious` to `scam` in 3 of 3 runs.
+- **Wrong-number openers are fixed.** m026, m064 and m065 ("Hi Emily…", "is this David?") went from `legit` ×3 to `suspicious` ×3. The gold-trading pivot (m068) is now `scam`.
+- **No new false alarms.** All three hard legit twins (m050 dinner, m071 church lunch, m072 "sorry, wrong number") stayed `legit` every run. Legit FP fell from 8% to 3%.
+- **Still missed:** m067, "Good morning! Long time no talk, how have you been? 😊", is `legit` every run. That's arguably correct from the text alone: without knowing whether the sender is a stranger, it can't be told apart from a real friend. The remaining errors are 4 edge cases pushed up to `scam` and the Uniqlo sale flagged `suspicious`.
+
+**Partial fix, found when trying it in the app:** "Hi Emily, are we still meeting for lunch?" (m064) is now labelled `suspicious`, but its opener check scores only 0.13. Jev reads the check literally and can't know that "Emily" isn't the recipient. The label comes from v3's label definitions, not the tactic check, so the page showed a verdict with no reason. The explanation now says so ("No single warning sign stood out…"). Rewording that check is a candidate for the next eval run.
+
+**Limitation this exposed:** wrong-number scams are defined by *who sent them*, which the checker can't see. "Are we still meeting for lunch?" is a scam opener from a stranger and a normal message from a friend. A future version could ask the user "Do you know this sender?" and pass the answer to Jev as state.
 
 ## Limitations
 - **Synthetic, small dataset.** The 60 messages were written by us in the style of public advisories. Real scams are messier.

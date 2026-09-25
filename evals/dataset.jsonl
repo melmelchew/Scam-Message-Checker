@@ -58,3 +58,15 @@
 {"id": "m058", "label": "legit", "category": "security_notice", "source": "synthetic", "text": "Google: A new sign-in on Mac. If this was you, you don't need to do anything. If not, review your account activity at myaccount.google.com."}
 {"id": "m059", "label": "legit", "category": "work", "source": "synthetic", "text": "Hi, this is Sarah from HR. Your onboarding documents are ready for signing in Workday. Let me know if you have any questions."}
 {"id": "m060", "label": "legit", "category": "school", "source": "synthetic", "text": "Dear parents, the school sports day is on 5 Oct. Please ensure your child wears the house T-shirt. - ABC Primary School"}
+{"id": "m061", "label": "scam", "category": "delivery", "source": "user_template", "text": "SingPost: Your package delivery is pending due to an unpaid customs fee of $1.50. Update your details here to rearrange delivery: singpost-redelivery.top"}
+{"id": "m062", "label": "scam", "category": "bank_impersonation", "source": "user_template", "text": "DBS Alert: Unauthorised login detected on your account from an overseas device. Verify your identity immediately to block the transaction: dbs-verify-block.com"}
+{"id": "m063", "label": "scam", "category": "prize", "source": "user_template", "text": "Congratulations! You have been selected to win a $500 NTUC FairPrice voucher in our lucky draw. Claim your prize now at fairprice-rewards.xyz"}
+{"id": "m064", "label": "suspicious", "category": "wrong_number", "source": "user_template", "text": "Hi Emily, are we still meeting for lunch on Thursday? Let me know!"}
+{"id": "m065", "label": "suspicious", "category": "wrong_number", "source": "user_template", "text": "I was cleaning out my contacts and found this number, is this David?"}
+{"id": "m066", "label": "suspicious", "category": "wrong_number", "source": "synthetic", "text": "Hello, is this Mr Lim? Sorry, I think my assistant saved the wrong number. You seem nice, where are you from?"}
+{"id": "m067", "label": "suspicious", "category": "wrong_number", "source": "synthetic", "text": "Good morning! Long time no talk, how have you been? \ud83d\ude0a"}
+{"id": "m068", "label": "scam", "category": "wrong_number_pivot", "source": "synthetic", "text": "Sorry wrong number haha! But nice to meet you, I'm Linda. I trade gold on the side and made 30% last month, want me to show you how?"}
+{"id": "m069", "label": "scam", "category": "job", "source": "synthetic", "text": "Earn $50-$200 daily reviewing hotels on Google Maps. Flexible hours, paid same day. Contact our HR on Telegram @hr_reviews_sg"}
+{"id": "m070", "label": "scam", "category": "job", "source": "synthetic", "text": "Shopee merchant hiring part-timers to boost product ratings. Earn commission per order, just top up the order amount first and get it back with 15% profit."}
+{"id": "m071", "label": "legit", "category": "personal", "source": "synthetic", "text": "Hi Aunty, it's Wei Ling from church. Are we still meeting for lunch on Thursday after service?"}
+{"id": "m072", "label": "legit", "category": "personal", "source": "synthetic", "text": "Sorry, wrong number! Take care."}

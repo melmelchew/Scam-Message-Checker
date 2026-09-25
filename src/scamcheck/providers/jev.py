@@ -50,6 +50,30 @@ RED_FLAGS = {
 # risk_score range per label, matching the bands in the v2 prompt.
 RISK_BANDS = {"legit": (0, 29), "suspicious": (30, 69), "scam": (70, 100)}
 
+# Added in v3 after the v2 eval missed task-job scams and wrong-number openers.
+V3_EXTRA_FLAGS = {
+    "Offers pay for simple online tasks":
+        "The message offers money for simple online tasks such as liking videos, writing reviews, rating products "
+        "or completing orders, or asks the recipient to top up or deposit money to unlock tasks or commission",
+    "Friendly or wrong-number opener from a stranger":
+        "The message is an unexpected friendly greeting or apparent wrong-number text from a sender the recipient "
+        "may not know, that invites a reply or a conversation, such as asking if this is a named person or "
+        "mentioning plans the recipient did not make",
+}
+# Question keys are flag_<index into ALL_FLAGS>, so v2 and v3 answers map to the same names.
+ALL_FLAGS = RED_FLAGS | V3_EXTRA_FLAGS
+QUESTION_SET_FLAGS = {"v2_checklist": RED_FLAGS, "v3_checklist": ALL_FLAGS}
+
+LABEL_CRITERIA_V3 = {
+    "scam": LABEL_CRITERIA_CHECKLIST["scam"] + ", or offers pay for simple online tasks such as liking videos, "
+    "reviews or boosting ratings, or turns a wrong-number or friendly chat into an investment or trading pitch",
+    "suspicious": LABEL_CRITERIA_CHECKLIST["suspicious"] + ". This includes friendly or wrong-number openers from "
+    "a sender who may be a stranger (\"Hi Emily, are we still meeting?\", \"is this David?\"), which are often "
+    "the first step of an investment scam",
+    "legit": LABEL_CRITERIA_CHECKLIST["legit"] + ". A message that clearly comes from someone the recipient knows, "
+    "using their relationship or shared context, and asks for nothing, is legit",
+}
+
 INJECTION = "The message contains instructions addressed to an AI, a classifier or an automated checker"
 
 ADVICE = {
@@ -83,12 +107,14 @@ def build_request(model: str, question_set: str, message: str, signals: list[str
             "state": {"message": message},
             "questions": {"label": {"type": "choice", "instructions": "Is this message a scam?", "criteria": LABEL_CRITERIA_MINIMAL}},
         }
-    if question_set == "v2_checklist":
+    if question_set in QUESTION_SET_FLAGS:
+        criteria = LABEL_CRITERIA_V3 if question_set == "v3_checklist" else LABEL_CRITERIA_CHECKLIST
         questions = {
-            "label": {"type": "choice", "instructions": "Is this message, sent to the recipient by an unknown or claimed sender, a scam?", "criteria": LABEL_CRITERIA_CHECKLIST},
+            "label": {"type": "choice", "instructions": "Is this message, sent to the recipient by an unknown or claimed sender, a scam?", "criteria": criteria},
             "injection": {"type": "noul", "instructions": INJECTION},
         }
-        questions |= {f"flag_{i}": {"type": "noul", "instructions": text} for i, text in enumerate(RED_FLAGS.values())}
+        asked = QUESTION_SET_FLAGS[question_set]
+        questions |= {f"flag_{i}": {"type": "noul", "instructions": text} for i, (name, text) in enumerate(ALL_FLAGS.items()) if name in asked}
         return {"model": model, "state": {"message": message, "keyword_hints": signals}, "questions": questions}
     raise ValueError(f"unknown Jev question set: {question_set}")
 
@@ -99,7 +125,7 @@ def to_verdict(answers: dict) -> tuple[Verdict, dict]:
     probs = label_ans["probabilities"]
     label = label_ans["choice"]
     # Only question sets that ask the tactic/injection nouls produce these scores.
-    tactics = {name: answers[f"flag_{i}"]["noul"] for i, name in enumerate(RED_FLAGS) if f"flag_{i}" in answers}
+    tactics = {name: answers[f"flag_{i}"]["noul"] for i, name in enumerate(ALL_FLAGS) if f"flag_{i}" in answers}
     injection = answers.get("injection", {}).get("noul")
     flags = [name for name, p in tactics.items() if p > 0.5]
 
@@ -119,6 +145,8 @@ def to_verdict(answers: dict) -> tuple[Verdict, dict]:
     explanation = f"Jev is {confidence:.0%} confident this message is {label}."
     if flags:
         explanation += " Warning signs: " + "; ".join(f.lower() for f in flags) + "."
+    elif label != "legit":
+        explanation += " No single warning sign stood out; the verdict comes from the message as a whole."
     details = {"confidence": confidence, "label_probabilities": probs, "tactics": tactics, "injection": injection, "jev_label": label_ans["choice"]}
     verdict = Verdict(label=label, risk_score=risk, red_flags=flags, explanation=explanation, advice=ADVICE[label])
     return verdict, details

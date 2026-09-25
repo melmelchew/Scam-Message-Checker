@@ -52,7 +52,7 @@ def run_one(item: dict, model: str, prompt: str) -> dict:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--prompts", nargs="+", default=["v1_zero_shot", "v2_checklist"])
+    ap.add_argument("--prompts", nargs="+", default=["v2_checklist", "v3_checklist"])
     ap.add_argument("--models", nargs="+", default=[JEV], choices=sorted(PROVIDERS))
     ap.add_argument("--limit", type=int)
     ap.add_argument("--repeats", type=int, default=1, help="run each config N times to measure run-to-run variation")

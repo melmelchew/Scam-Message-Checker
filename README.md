@@ -28,5 +28,17 @@ src/scamcheck/config.py    models, pricing, DEFAULT_CONFIG (chosen by the eval)
 evals/                     dataset.jsonl, run_eval.py, metrics.py, results/REPORT.md
 ```
 
-## Agent-engineering method: Evaluation
-`evals/run_eval.py` compares two Jev question sets on 60 labelled messages (with repeats) and applies a decision rule written in advance: scam recall ≥ 90%, legit false-positive rate ≤ 10%, and no errors. The winner becomes `DEFAULT_CONFIG`. Results, the iteration and the limitations are in `evals/results/REPORT.md`.
+## Extra-knowledge build: Evaluation (option 4)
+This project's extra agent-engineering piece is a **small, repeatable evaluation** that compares Jev question sets (input formats) and uses the results to make project decisions.
+
+- **What:** `evals/run_eval.py` runs every message in `evals/dataset.jsonl` (72 labelled messages) through the same `check()` function the app uses. It repeats each config to measure run-to-run variation and scores it against a pass bar written down before each run: scam recall ≥ 90%, legit false positives ≤ 10%, 0 errors.
+- **Decisions it made:**
+  1. **v2 over v1:** v1 flagged 20% of real messages, including bank OTP texts.
+  2. **v3 over v2:** after a user review found wrong-number / friendly-opener scams missing, v3 got 27 of 30 target messages right against v2's 10 of 30, and legit false positives fell from 8% to 3%.
+- **Evidence:** raw runs in `evals/results/*.json`; write-up, failed attempts and limitations in [`evals/results/REPORT.md`](evals/results/REPORT.md).
+- **Failed attempt:** the free OpenCode tier rate-limited the first run (96 of 180 calls failed), then the retry code slept through a 17.8-hour quota reset until it was fixed to fail fast.
+- **Limitation:** 72 messages written by us are cleaner than real scams, and wrong-number scams depend on who sent them, which the checker can't see.
+
+```bash
+python -m evals.run_eval --repeats 3 --workers 4   # v2 vs v3, about $0.015
+```

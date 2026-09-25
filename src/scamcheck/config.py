@@ -17,7 +17,7 @@ PRICING = {JEV: (0.042, 0.0), JEV_PREVIEW: (0.042, 0.0), OPUS: (5.00, 25.00), HA
 class CheckerConfig:
     model: str = JEV
     # For Jev this names a question set (scamcheck.providers.jev); for Claude, a prompt file.
-    prompt_version: str = "v2_checklist"
+    prompt_version: str = "v3_checklist"
     # Effort is only used for Anthropic models that support it (not Haiku 4.5).
     effort: str | None = None
     max_tokens: int = 4096
