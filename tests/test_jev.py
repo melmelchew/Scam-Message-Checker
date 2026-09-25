@@ -152,3 +152,9 @@ def test_v3_answers_map_to_new_flag_names():
 def test_flagless_non_legit_verdict_explains_itself():
     v, _ = jev.to_verdict(answers(choice="suspicious", probs={"scam": 0.1, "suspicious": 0.6, "legit": 0.3}))
     assert v.red_flags == [] and "message as a whole" in v.explanation
+
+
+def test_secrecy_check_excludes_standard_code_warnings():
+    # "Do not share this OTP" scored 0.66-0.90 as secrecy before this exclusion was added.
+    text = jev.RED_FLAGS["Plays on emotion or secrecy"]
+    assert "not to share a code, OTP, PIN or password does not count" in text

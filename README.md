@@ -22,7 +22,7 @@ If Jev is less than 60% sure, a yellow **"Jev isn't sure"** note names the next 
 
 ![Not a scam](docs/demo/2_not_a_scam.gif)
 
-> In **Details**, "Plays on emotion or secrecy" shows ⚠️ 63% here: Jev reads the standard "do not share" warning as secrecy. The verdict ignores it, but it's a known quirk.
+> This recording predates a fix: its **Details** shows "Plays on emotion or secrecy" at ⚠️ 63%, because Jev read the standard "do not share" warning as secrecy. The check now excludes those warnings, and legit OTP messages score 2–3% (see `evals/results/REPORT.md`).
 
 **3. Suspicious:** "I was cleaning out my contacts… is this David?" → ⚠️ Suspicious, flagged as a wrong-number opener. These often lead into investment scams.
 

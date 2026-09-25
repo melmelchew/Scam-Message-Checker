@@ -44,7 +44,11 @@ RED_FLAGS = {
     "Pushes you to a link, app or another chat platform":
         "The message asks the recipient to open an unfamiliar or shortened link, install an app, or move to WhatsApp or Telegram",
     "Plays on emotion or secrecy":
-        "The message uses romance, a plea for help, or asks the recipient to keep it secret",
+        # Jev reads literally: "do not share this OTP" scored 0.66-0.90 as "secrecy" under the
+        # old wording, so standard security warnings are excluded explicitly.
+        "The message uses romance or an emotional plea for help, or asks the recipient to hide the message or "
+        "request from family, friends or their bank. A standard security warning telling the recipient not to "
+        "share a code, OTP, PIN or password does not count",
 }
 
 # risk_score range per label, matching the bands in the v2 prompt.

@@ -69,6 +69,10 @@ Otherwise keep v2 and record why.
 
 **Partial fix, found when trying it in the app:** "Hi Emily, are we still meeting for lunch?" (m064) is now labelled `suspicious`, but its opener check scores only 0.13. Jev reads the check literally and can't know that "Emily" isn't the recipient. The label comes from v3's label definitions, not the tactic check, so the page showed a verdict with no reason. The explanation now says so ("No single warning sign stood out…"). Rewording that check is a candidate for the next eval run.
 
+**Fix found while recording the demo GIFs:** in **Details**, legit OTP messages showed ⚠️ on "Plays on emotion or secrecy". Jev read "Do not share this OTP" as a request for secrecy, scoring 0.66–0.90 on m041–m043. The check was reworded to exclude standard "don't share your code" warnings.
+- **Targeted check:** m041–m043 went from 0.66–0.90 to 0.02–0.03. The real secrecy scams m010 ("don't tell dad") and m016 (romance) stayed at 0.97–0.98.
+- **Full re-run `20260925-152808-v3-secrecy-fix` (72 × 3):** accuracy 0.93 (was 0.92), scam recall 1.00 (unchanged), legit FP 0.01 (was 0.03), 0 errors, and the same set of wrong messages. No regression, so the change is kept.
+
 **Limitation this exposed:** wrong-number scams are defined by *who sent them*, which the checker can't see. "Are we still meeting for lunch?" is a scam opener from a stranger and a normal message from a friend. A future version could ask the user "Do you know this sender?" and pass the answer to Jev as state.
 
 ## Limitations
