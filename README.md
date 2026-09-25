@@ -3,6 +3,31 @@ For Claude Agentic Coding Course
 
 Paste a message into a Streamlit page and get a verdict (scam / suspicious / legit), a risk score, red flags and advice. Uses TypeSafe AI's Jev model (`jev-latest`) through the TypeSafe API. Claude models remain available as an optional provider.
 
+## How to use
+Paste a message, click **Check message**, read the verdict, then open **Details** for the full breakdown.
+
+| Verdict | What it means | What to do |
+|---|---|---|
+| 🚨 **Likely scam** (risk 70–100) | Clear scam tactics, listed under **Red flags** | Don't reply, click or pay. Contact the organisation through its official app or number. |
+| ⚠️ **Suspicious, verify first** (risk 30–69) | Some warning signs, but not conclusive | Don't act yet. Check with the sender through a channel you already trust. |
+| ✅ **Looks legit** (risk 0–29) | No meaningful warning signs | Fine to act on, but still never share codes or passwords. |
+
+If Jev is less than 60% sure, a yellow **"Jev isn't sure"** note names the next most likely verdict. **Details** shows the chance of each verdict, a score for each of the 9 scam-tactic checks (⚠️ = above 50%), the prompt-injection check and the keyword hints.
+
+**1. Detected scam:** SingPost $1.50 customs-fee message → 🚨 Likely scam, with impersonation, unusual payment and link red flags.
+
+![Detected scam](docs/demo/1_scam_detected.gif)
+
+**2. Not a scam:** a real DBS OTP text that says "Do not share this OTP" → ✅ Looks legit.
+
+![Not a scam](docs/demo/2_not_a_scam.gif)
+
+> In **Details**, "Plays on emotion or secrecy" shows ⚠️ 63% here: Jev reads the standard "do not share" warning as secrecy. The verdict ignores it, but it's a known quirk.
+
+**3. Suspicious:** "I was cleaning out my contacts… is this David?" → ⚠️ Suspicious, flagged as a wrong-number opener. These often lead into investment scams.
+
+![Suspicious](docs/demo/3_suspicious.gif)
+
 ## Setup
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
@@ -14,7 +39,7 @@ cp .env.example .env   # then set TYPESAFE_API_KEY
 ```bash
 streamlit run app.py           # web UI
 pytest                         # offline tests (the API is mocked)
-python -m evals.run_eval --workers 2   # v1 vs v2 question sets on Jev
+python -m evals.run_eval --repeats 3 --workers 4   # v2 vs v3 question sets on Jev
 python -m evals.run_eval --rules-only   # free regex baseline
 ```
 
@@ -22,7 +47,7 @@ python -m evals.run_eval --rules-only   # free regex baseline
 ```
 src/scamcheck/checker.py   check(message, config): the one function the app and the eval share
 src/scamcheck/rules.py     regex hints (never the final verdict)
-src/scamcheck/providers/jev.py  Jev question sets (v1, v2) and answer -> Verdict mapping
+src/scamcheck/providers/jev.py  Jev question sets (v1-v3) and answer -> Verdict mapping
 src/scamcheck/prompts/     Claude prompts (optional provider)
 src/scamcheck/config.py    models, pricing, DEFAULT_CONFIG (chosen by the eval)
 evals/                     dataset.jsonl, run_eval.py, metrics.py, results/REPORT.md
