@@ -14,7 +14,7 @@ from pathlib import Path
 from evals.metrics import passes, summarize
 from scamcheck import rules
 from scamcheck.checker import CheckError, check
-from scamcheck.config import JEV_FREE, PRICING, PROVIDERS, config_for
+from scamcheck.config import JEV, PRICING, PROVIDERS, config_for
 
 HERE = Path(__file__).parent
 EST_TOKENS_PER_CALL = (1300, 700)  # (input, output) upper-ish estimate for LLMs
@@ -53,7 +53,7 @@ def run_one(item: dict, model: str, prompt: str) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--prompts", nargs="+", default=["v1_zero_shot", "v2_checklist"])
-    ap.add_argument("--models", nargs="+", default=[JEV_FREE], choices=sorted(PROVIDERS))
+    ap.add_argument("--models", nargs="+", default=[JEV], choices=sorted(PROVIDERS))
     ap.add_argument("--limit", type=int)
     ap.add_argument("--repeats", type=int, default=1, help="run each config N times to measure run-to-run variation")
     ap.add_argument("--workers", type=int, default=6)

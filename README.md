@@ -1,13 +1,13 @@
 # Scam-Message-Checker
 For Claude Agentic Coding Course
 
-Paste a message into a Streamlit page and get a verdict (scam / suspicious / legit), a risk score, red flags and advice. Uses TypeSafe AI's Jev model (`jev-1.13-free`) through OpenCode Zen. Claude models remain available as an optional provider.
+Paste a message into a Streamlit page and get a verdict (scam / suspicious / legit), a risk score, red flags and advice. Uses TypeSafe AI's Jev model (`jev-latest`) through the TypeSafe API. Claude models remain available as an optional provider.
 
 ## Setup
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-cp .env.example .env   # then set OPENCODE_API_KEY
+cp .env.example .env   # then set TYPESAFE_API_KEY
 ```
 
 ## Run

@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from scamcheck.checker import CheckError, check
-from scamcheck.config import JEV_FREE, CheckerConfig
+from scamcheck.config import JEV, CheckerConfig
 from scamcheck.providers import jev
 
 
@@ -23,11 +23,11 @@ def fake_http(payload, status=200):
 
 @pytest.fixture(autouse=True)
 def api_key(monkeypatch):
-    monkeypatch.setenv("OPENCODE_API_KEY", "test")
+    monkeypatch.setenv("TYPESAFE_API_KEY", "test")
 
 
 def test_v2_request_has_label_injection_and_flag_questions():
-    req = jev.build_request(JEV_FREE, "v2_checklist", "hi", ["contains a link"])
+    req = jev.build_request(JEV, "v2_checklist", "hi", ["contains a link"])
     assert req["state"] == {"message": "hi", "keyword_hints": ["contains a link"]}
     assert req["questions"]["label"]["type"] == "choice"
     assert set(req["questions"]["label"]["criteria"]) == {"scam", "suspicious", "legit"}
@@ -35,7 +35,7 @@ def test_v2_request_has_label_injection_and_flag_questions():
 
 
 def test_v1_request_is_label_only():
-    req = jev.build_request(JEV_FREE, "v1_zero_shot", "hi", [])
+    req = jev.build_request(JEV, "v1_zero_shot", "hi", [])
     assert list(req["questions"]) == ["label"]
 
 
@@ -54,27 +54,27 @@ def test_injection_forces_scam():
 
 def test_check_end_to_end_with_mock_http():
     http = fake_http({"answers": answers(), "usage": {"input_tokens": 400, "output_tokens": 60}})
-    res = check("Pay $2 fee at bit.ly/x", CheckerConfig(model=JEV_FREE), client=http)
+    res = check("Pay $2 fee at bit.ly/x", CheckerConfig(model=JEV), client=http)
     assert res.verdict.label == "scam" and res.input_tokens == 400 and res.confidence == 0.9
     url = http.post.call_args.args[0]
-    assert url == "https://opencode.ai/zen/v1/systemone"
+    assert url == "https://api.typesafe.ai/v1/systemone"
 
 
 @pytest.mark.parametrize("status", [429, 500])
 def test_http_errors_become_friendly(status):
     with pytest.raises(CheckError):
-        check("hi", CheckerConfig(model=JEV_FREE), client=fake_http({}, status))
+        check("hi", CheckerConfig(model=JEV), client=fake_http({}, status))
 
 
 def test_malformed_response_raises():
     with pytest.raises(CheckError, match="unexpected format"):
-        check("hi", CheckerConfig(model=JEV_FREE), client=fake_http({"answers": {}}))
+        check("hi", CheckerConfig(model=JEV), client=fake_http({"answers": {}}))
 
 
 def test_missing_key(monkeypatch):
-    monkeypatch.delenv("OPENCODE_API_KEY")
-    with pytest.raises(CheckError, match="OPENCODE_API_KEY"):
-        check("hi", CheckerConfig(model=JEV_FREE), client=fake_http({}))
+    monkeypatch.delenv("TYPESAFE_API_KEY")
+    with pytest.raises(CheckError, match="TYPESAFE_API_KEY"):
+        check("hi", CheckerConfig(model=JEV), client=fake_http({}))
 
 
 def test_rate_limit_is_retried(monkeypatch):
@@ -83,7 +83,7 @@ def test_rate_limit_is_retried(monkeypatch):
     busy = MagicMock(status_code=429, headers={})
     http = MagicMock()
     http.post.side_effect = [busy, busy, ok]
-    res = check("hi", CheckerConfig(model=JEV_FREE), client=http)
+    res = check("hi", CheckerConfig(model=JEV), client=http)
     assert res.verdict.label == "scam" and http.post.call_count == 3
 
 
@@ -93,7 +93,7 @@ def test_quota_exhaustion_fails_fast_instead_of_sleeping(monkeypatch):
     http = MagicMock()
     http.post.return_value = MagicMock(status_code=429, headers={"retry-after": "64016"})
     with pytest.raises(CheckError, match="quota is used up"):
-        check("hi", CheckerConfig(model=JEV_FREE), client=http)
+        check("hi", CheckerConfig(model=JEV), client=http)
     assert slept == [] and http.post.call_count == 1
 
 

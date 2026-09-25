@@ -1,4 +1,4 @@
-"""Jev (TypeSafe AI) via OpenCode Zen's /systemone endpoint.
+"""Jev via TypeSafe AI's /systemone endpoint.
 
 Jev answers typed questions about a state with probabilities instead of text, so the
 explanation and advice in the Verdict are assembled here from its answers.
@@ -10,7 +10,7 @@ from functools import cache
 
 import httpx
 
-from scamcheck.config import OPENCODE_ZEN_BASE_URL
+from scamcheck.config import TYPESAFE_BASE_URL
 from scamcheck.models import Verdict
 
 LABEL_CRITERIA_MINIMAL = {
@@ -124,13 +124,13 @@ def _http() -> httpx.Client:
 
 
 def call(payload: dict, client: httpx.Client | None = None) -> dict:
-    key = os.environ.get("OPENCODE_API_KEY")
+    key = os.environ.get("TYPESAFE_API_KEY")
     if not key:
-        raise JevError("OPENCODE_API_KEY is not set. Add it to .env.")
+        raise JevError("TYPESAFE_API_KEY is not set. Add it to .env.")
     http = client or _http()
     for attempt in range(MAX_RETRIES + 1):
         try:
-            resp = http.post(f"{OPENCODE_ZEN_BASE_URL}/systemone", json=payload, headers={"Authorization": f"Bearer {key}"})
+            resp = http.post(f"{TYPESAFE_BASE_URL}/systemone", json=payload, headers={"Authorization": f"Bearer {key}"})
         except httpx.TimeoutException as e:
             raise JevError("The checking service timed out. Try again.") from e
         except httpx.HTTPError as e:
@@ -139,8 +139,8 @@ def call(payload: dict, client: httpx.Client | None = None) -> dict:
             break
         wait = _retry_after(resp)
         if wait is not None and wait > MAX_WAIT_S:
-            # A quota reset (the free tier sends retry-after of many hours), not a burst limit.
-            raise JevError(f"The free Jev quota is used up. Try again in about {wait / 3600:.1f} hours.")
+            # A quota reset (retry-after of many hours), not a burst limit.
+            raise JevError(f"The Jev quota is used up. Try again in about {wait / 3600:.1f} hours.")
         if attempt == MAX_RETRIES:
             raise JevError("The checker is busy right now. Try again in a minute.")
         time.sleep(wait if wait is not None else min(2 ** attempt, MAX_WAIT_S))

@@ -6,7 +6,7 @@ BADGES = {"scam": ("🚨 Likely scam", "red"), "suspicious": ("⚠️ Suspicious
 
 st.set_page_config(page_title="Scam Message Checker", page_icon="🛡️")
 st.title("🛡️ Scam Message Checker")
-st.caption("Paste an SMS, email, or chat message. It is sent to the Jev model (via OpenCode) for checking; this app does not store it.")
+st.caption("Paste an SMS, email, or chat message. It is sent to the Jev model (TypeSafe AI) for checking; this app does not store it.")
 
 message = st.text_area("Message", height=180, placeholder="e.g. Your parcel is held at customs, pay $1.99 at bit.ly/...")
 
